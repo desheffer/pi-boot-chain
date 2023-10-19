@@ -29,13 +29,13 @@ pub extern "C" fn kernel_main() {
 
     serial::write_bytes(&RESET_PAYLOAD);
 
-    loop {
-        for i in 0..HEADER_PREAMBLE.len() {
-            if serial::read_byte() != HEADER_PREAMBLE[i] {
-                break;
-            }
-        }
-        break;
+    let mut verify = 0;
+    while verify < HEADER_PREAMBLE.len() {
+        verify = match serial::read_byte() {
+            byte if byte == HEADER_PREAMBLE[verify] => verify + 1,
+            byte if byte == HEADER_PREAMBLE[0] => 1,
+            _ => 0,
+        };
     }
 
     let mut size_buffer = [0; 4];

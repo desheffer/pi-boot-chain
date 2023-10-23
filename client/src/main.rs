@@ -9,13 +9,12 @@ mod common;
 mod bsp;
 mod start;
 
-use core::arch::asm;
 use core::panic::PanicInfo;
 use core::primitive;
 
 use crate::bsp::serial;
 use crate::common::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
-use crate::start::__boot_start;
+use crate::start::{__boot_start, jump};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -46,17 +45,15 @@ pub extern "C" fn kernel_main() {
 
     serial::write_bytes(&OK_PAYLOAD);
 
-    copy(size as usize);
+    unsafe {
+        copy(size as usize);
+        jump();
+    }
 }
 
-pub fn copy(size: usize) {
-    unsafe {
-        let boot_start = &mut __boot_start as *mut u8;
-
-        for i in 0..size {
-            boot_start.add(i).write_volatile(serial::read_byte());
-        }
-
-        asm!("br {}", in(reg) boot_start);
+pub unsafe fn copy(size: usize) {
+    let boot_start = &mut __boot_start as *mut u8;
+    for i in 0..size {
+        boot_start.add(i).write_volatile(serial::read_byte());
     }
 }

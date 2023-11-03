@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{Bytes, Read};
 use std::primitive;
+use std::thread;
+use std::time::Duration;
 
 use crate::common::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
 use crate::serial::SerialAdapter;
@@ -91,7 +93,10 @@ impl<'a> StateMachine<'a> {
 
         match self.serial.read_byte() {
             // No change.
-            None => Ok(State::Terminal(progress)),
+            None => {
+                thread::sleep(Duration::from_millis(10));
+                Ok(State::Terminal(progress))
+            }
             // Got expected byte from reset sequence.
             Some(byte) if byte == expected_byte => {
                 let progress = progress + 1;

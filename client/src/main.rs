@@ -22,7 +22,7 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn kernel_main() {
+pub extern "C" fn kernel_main(x0: u64, x1: u64, x2: u64, x3: u64) {
     serial::init();
     serial::write_bytes(b"\n*** system booting ***\n");
 
@@ -47,7 +47,7 @@ pub extern "C" fn kernel_main() {
 
     unsafe {
         copy(size as usize);
-        jump();
+        jump(x0, x1, x2, x3);
     }
 }
 

@@ -1,6 +1,7 @@
 use clap::Parser;
 use colored::*;
-use std::process;
+use std::thread;
+use std::time::Duration;
 
 use crate::event::StdoutEventHandler;
 use crate::serial::SerialAdapter;
@@ -30,13 +31,6 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    if let Err(error) = serve(args.serial, tty::DEFAULT_PATH.to_owned(), args.image) {
-        eprintln!("{}: {}", "Error".bold().red(), error);
-        process::exit(1);
-    }
-}
-
-fn serve(serial_path: String, tty_path: String, image_path: String) -> Result<(), String> {
     println!(
         "{} {} is {}",
         "🚀",
@@ -44,6 +38,22 @@ fn serve(serial_path: String, tty_path: String, image_path: String) -> Result<()
         "Ready".bold().green()
     );
 
+    loop {
+        match serve(
+            args.serial.to_owned(),
+            tty::DEFAULT_PATH.to_owned(),
+            args.image.to_owned(),
+        ) {
+            Ok(_) => break,
+            Err(error) => {
+                eprintln!("{}: {}", "Error".bold().red(), error);
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    }
+}
+
+fn serve(serial_path: String, tty_path: String, image_path: String) -> Result<(), String> {
     let serial = SerialAdapter::new(serial_path.to_owned())
         .map_err(|e| format!("{}: {}", serial_path, e.to_string()))?;
 

@@ -3,18 +3,18 @@
 #![no_std]
 #![no_main]
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-mod bsp;
-mod start;
-
 use core::panic::PanicInfo;
 use core::primitive;
 
 use crate::bsp::serial;
 use crate::common::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
 use crate::start::{__boot_start, jump};
+
+#[path = "../../common/mod.rs"]
+mod common;
+
+mod bsp;
+mod start;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {

@@ -1,11 +1,3 @@
-#[path = "../../common/mod.rs"]
-mod common;
-
-mod event;
-mod serial;
-mod state;
-mod tty;
-
 use clap::Parser;
 use colored::*;
 use std::process;
@@ -14,6 +6,14 @@ use crate::event::StdoutEventHandler;
 use crate::serial::SerialAdapter;
 use crate::state::StateMachine;
 use crate::tty::TtyAdapter;
+
+#[path = "../../common/mod.rs"]
+mod common;
+
+mod event;
+mod serial;
+mod state;
+mod tty;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

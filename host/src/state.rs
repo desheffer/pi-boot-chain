@@ -1,10 +1,10 @@
+use client::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
 use std::fs::File;
 use std::io::{Bytes, Read};
 use std::primitive;
 use std::thread;
 use std::time::Duration;
 
-use crate::common::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
 use crate::serial::SerialAdapter;
 use crate::tty::TtyAdapter;
 

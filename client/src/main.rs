@@ -10,10 +10,8 @@ use crate::bsp::serial;
 use crate::common::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
 use crate::start::{__boot_start, jump};
 
-#[path = "../../common/mod.rs"]
-mod common;
-
 mod bsp;
+mod common;
 mod start;
 
 #[panic_handler]

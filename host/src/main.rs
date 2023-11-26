@@ -8,9 +8,6 @@ use crate::serial::SerialAdapter;
 use crate::state::StateMachine;
 use crate::tty::TtyAdapter;
 
-#[path = "../../common/mod.rs"]
-mod common;
-
 mod event;
 mod serial;
 mod state;

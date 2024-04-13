@@ -8,5 +8,6 @@ clap = { version = "4.4.6", features = ["derive"] }
 client = { path = "../client" }
 colored = "2.0.4"
 indicatif = "0.17.7"
+miniz_oxide = "0.7.2"
 serialport = "4.2.2"
 termios = "0.3.3"

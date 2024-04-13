@@ -23,12 +23,12 @@ impl EventHandler for StdoutEventHandler {
             }
             Event::TransferProgress(sent, total) => {
                 if let None = self.progress_bar {
-                    let pb = ProgressBar::new(total);
+                    let pb = ProgressBar::new(total as _);
                     pb.set_style(ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
                         .unwrap());
                     self.progress_bar = Some(pb);
                 }
-                self.progress_bar.as_mut().unwrap().set_position(sent);
+                self.progress_bar.as_mut().unwrap().set_position(sent as _);
                 if sent == total {
                     self.progress_bar.as_mut().unwrap().finish();
                     self.progress_bar = None;

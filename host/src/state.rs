@@ -1,12 +1,13 @@
 use client::{HEADER_PREAMBLE, OK_PAYLOAD, RESET_PAYLOAD};
-use std::fs::File;
-use std::io::{Bytes, Read};
-use std::primitive;
+use miniz_oxide::deflate::compress_to_vec;
+use std::fs::read;
 use std::thread;
 use std::time::Duration;
 
 use crate::serial::SerialAdapter;
 use crate::tty::TtyAdapter;
+
+const COMPRESSION_LEVEL: u8 = 10;
 
 /// Represents a state to be managed by the state machine.
 pub enum State {
@@ -14,13 +15,13 @@ pub enum State {
     LoadingImage,
     SendingHeader(usize),
     WaitingForOk(usize),
-    SendingImage(u64),
+    SendingImage(usize),
 }
 
 /// Represents events that can be emitted by the state machine.
 pub enum Event {
     TerminalOutput(u8),
-    TransferProgress(u64, u64),
+    TransferProgress(usize, usize),
 }
 
 /// Handles events emitted by the state machine.
@@ -35,8 +36,8 @@ pub struct StateMachine<'a> {
     image_path: String,
     state: State,
     header_payload: Vec<u8>,
-    image_size: u64,
-    image_payload: Option<Bytes<File>>,
+    image_size: usize,
+    image_payload: Option<Vec<u8>>,
     event_handler: &'a mut dyn EventHandler,
 }
 
@@ -122,24 +123,22 @@ impl<'a> StateMachine<'a> {
     ///
     /// This mode advances if the image is loaded successfully.
     fn do_load_image(&mut self) -> Result<State, String> {
-        let image = File::open(&self.image_path)
+        let image = &read(&self.image_path)
             .map_err(|e| format!("{}: {}", self.image_path, e.to_string()))?;
 
-        self.image_size = image
-            .metadata()
-            .map_err(|e| format!("{}: {}", self.image_path, e.to_string()))?
-            .len();
+        let compressed_image = compress_to_vec(image, COMPRESSION_LEVEL);
+
+        self.image_size = compressed_image.len();
+        self.image_payload = Some(compressed_image);
 
         self.event_handler
             .handle(Event::TransferProgress(0, self.image_size));
 
         self.header_payload.clear();
         self.header_payload.extend(HEADER_PREAMBLE);
-        for byte in primitive::u32::to_le_bytes(self.image_size as u32) {
+        for byte in (self.image_size as u32).to_le_bytes() {
             self.header_payload.push(byte);
         }
-
-        self.image_payload = Some(image.bytes());
 
         // Loaded image. Go to next step.
         Ok(State::SendingHeader(0))
@@ -199,18 +198,15 @@ impl<'a> StateMachine<'a> {
     ///
     /// This mode advances after all bytes are written. At this point, the application is reset to
     /// terminal mode to allow interaction with the serial device.
-    fn do_send_image(&mut self, progress: u64) -> Result<State, String> {
+    fn do_send_image(&mut self, progress: usize) -> Result<State, String> {
         self.event_handler
             .handle(Event::TransferProgress(progress, self.image_size));
 
         let payload = self.image_payload.as_mut().unwrap();
-        let next_byte = payload
-            .next()
-            .unwrap()
-            .map_err(|e| format!("{}: {}", self.image_path, e.to_string()))?;
+        let next_byte = payload.get(progress).unwrap();
 
         self.serial
-            .write_byte(next_byte)
+            .write_byte(*next_byte)
             .map_err(|e| format!("{}: {}", self.serial.name(), e.to_string()))?;
 
         self.serial
